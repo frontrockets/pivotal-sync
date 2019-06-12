@@ -1,0 +1,51 @@
+{
+  "name": "@frontrockets/connect-github-pivotal",
+  "version": "0.0.1",
+  "description": "Make connection between github and pivotal",
+  "author": "Eugene Zhlobo <ezhlobo@gmail.com>",
+  "license": "MIT",
+  "repository": "https://github.com/@frontrockets/connect-github-pivotal.git",
+  "homepage": "https://github.com/@frontrockets/connect-github-pivotal",
+  "bugs": "https://github.com/@frontrockets/connect-github-pivotal/issues",
+  "keywords": [
+    "probot",
+    "github",
+    "probot-app"
+  ],
+  "scripts": {
+    "dev": "nodemon",
+    "start": "probot run ./src/index.js",
+    "lint": "prettier --check './src/**/*.js'",
+    "test": "jest"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "probot": "^9.2.4"
+  },
+  "devDependencies": {
+    "jest": "^24.0.0",
+    "lodash": "^4.17.11",
+    "nock": "^10.0.0",
+    "nodemon": "^1.17.2",
+    "prettier": "^1.18.2",
+    "smee-client": "^1.0.2"
+  },
+  "engines": {
+    "node": ">= 8.3.0"
+  },
+  "nodemonConfig": {
+    "exec": "npm start",
+    "watch": [
+      ".env",
+      "."
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all"
+  }
+}
