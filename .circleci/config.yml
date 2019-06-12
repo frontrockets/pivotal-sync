@@ -1,0 +1,62 @@
+version: 2
+
+defaults: &defaults
+  environment:
+    NODE_ENV: development
+  docker:
+    - image: circleci/node
+
+jobs:
+  prepare:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
+
+      - run: yarn install --frozen-lockfile
+
+      - save_cache:
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
+
+      - run:
+          command: yarn lint
+          when: always
+
+      - run:
+          command: yarn test
+          when: always
+
+  deploy:
+    <<: *defaults
+    steps:
+      - checkout
+
+      - run:
+          name: Install NOW
+          command: |
+            echo 'export PATH=$(yarn global bin):$PATH' >> $BASH_ENV
+            source $BASH_ENV
+            yarn global add now
+
+      - run:
+          name: Deploy
+          command: now --target production -t $NOW_TOKEN
+
+workflows:
+  version: 2
+  delivering:
+    jobs:
+      - prepare
+
+      - deploy:
+          requires:
+            - prepare
+          filters:
+            branches:
+              only:
+                - master
