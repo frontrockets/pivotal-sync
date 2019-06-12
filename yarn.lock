@@ -431,6 +431,11 @@
     "@types/istanbul-lib-coverage" "*"
     "@types/istanbul-lib-report" "*"
 
+"@types/node@^12.0.7":
+  version "12.0.8"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.0.8.tgz#551466be11b2adc3f3d47156758f610bd9f6b1d8"
+  integrity sha512-b8bbUOTwzIY3V5vDTY1fIJ+ePKDUBqt2hC2woVGotdQQhG/2Sh62HOKHrT7ab+VerXAcPyAiTEipPu/FsreUtg==
+
 "@types/stack-utils@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-1.0.1.tgz#0a851d3bd96498fa25c33ab7278ed3bd65f06c3e"
@@ -3862,7 +3867,15 @@ pretty-format@^24.8.0:
     ansi-styles "^3.2.0"
     react-is "^16.8.4"
 
-probot@^9.2.4:
+probot-serverless-now@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/probot-serverless-now/-/probot-serverless-now-2.1.0.tgz#ffbc8aa0f3112546c9dc78c636be9580b77d62da"
+  integrity sha512-yh6baHexqDBQ9+1XsLoiy5Q0ka49Ye4u/T7zjRLu9OS20YSWAZEUcmjX5ayUbCawTsu2QDXjyw3REqa70VUSgQ==
+  dependencies:
+    "@types/node" "^12.0.7"
+    probot "^9.2.13"
+
+probot@^9.2.13, probot@^9.2.4:
   version "9.2.14"
   resolved "https://registry.yarnpkg.com/probot/-/probot-9.2.14.tgz#1395eb6ccec5027f910c9aada1515468350c641a"
   integrity sha512-3uTK4sgHuLHIFMnR8vtGwPRg4NaCelDx80OF0c/YRSXN2/XX2sfVaJudpQLZDgwzsqddZtj4phtrfAWeq+TAhw==

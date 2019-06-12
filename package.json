@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "axios": "^0.19.0",
-    "probot": "^9.2.4"
+    "probot": "^9.2.4",
+    "probot-serverless-now": "^2.1.0"
   },
   "devDependencies": {
     "jest": "^24.0.0",
