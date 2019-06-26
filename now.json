@@ -3,11 +3,10 @@
   "name": "connect-github-pivotal",
   "alias": "connect-github-pivotal.now.sh",
   "builds": [{ "src": "index.js", "use": "@now/node" }],
-  "routes": [{ "src": "/", "dest": "/index.js" }],
   "env": {
-    "APP_ID": "@app-id",
-    "WEBHOOK_SECRET": "@webhook-secret",
-    "PRIVATE_KEY": "@private-key",
-    "PIVOTAL_TOKEN": "@pivotal-token"
+    "APP_ID": "@pivotal-sync-app-id",
+    "WEBHOOK_SECRET": "@pivotal-sync-webhook-secret",
+    "PRIVATE_KEY": "@pivotal-sync-private-key",
+    "PIVOTAL_TOKEN": "@pivotal-sync-token"
   }
 }
