@@ -1,4 +1,5 @@
 const extractPivotalLink = require('./lib/extractPivotalLink')
+const syncReviews = require('./lib/syncReviews')
 const Pivotal = require('./lib/Pivotal')
 
 module.exports = app => {
@@ -13,4 +14,9 @@ module.exports = app => {
       }
     }
   })
+
+  app.on('pull_request.review_request_removed', syncReviews)
+  app.on('pull_request.review_requested', syncReviews)
+  app.on('pull_request_review.submitted', syncReviews)
+  app.on('pull_request_review.dismissed', syncReviews)
 }
