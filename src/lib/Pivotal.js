@@ -16,9 +16,10 @@ module.exports.setStoryState = (id, state) => {
 module.exports.setStoryReviews = async (id, issueReviewers) => {
   const REVIEW_TYPE_NAME = 'Code'
 
-  const projectId = await request
-    .get(`stories/${id}`)
-    .then(result => result.data.project_id)
+  const story = await request.get(`stories/${id}`).then(result => result.data)
+
+  const projectId = story.project_id
+  const storyOwnerIds = story.owner_ids
 
   const reviewType = await request
     .get(`projects/${projectId}?fields=review_types`)
@@ -66,16 +67,20 @@ module.exports.setStoryReviews = async (id, issueReviewers) => {
 
   Object.keys(issueReviewers).forEach(issueReviewer => {
     const member = members.find(item => item.username === issueReviewer)
-    const hasExistingReview = !!currentReviews.find(
-      currentReview => currentReview.reviewer_id === member.id,
-    )
 
-    if (member && !hasExistingReview) {
-      createReviews.push({
-        review_type_id: reviewType.id,
-        reviewer_id: member.id,
-        status: issueReviewers[issueReviewer],
-      })
+    if (member) {
+      const hasExistingReview = !!currentReviews.find(
+        currentReview => currentReview.reviewer_id === member.id,
+      )
+      const isOwnerOfStory = storyOwnerIds.includes(member.id)
+
+      if (!hasExistingReview && !isOwnerOfStory) {
+        createReviews.push({
+          review_type_id: reviewType.id,
+          reviewer_id: member.id,
+          status: issueReviewers[issueReviewer],
+        })
+      }
     }
   })
 
