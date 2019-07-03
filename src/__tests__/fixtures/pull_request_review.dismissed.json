@@ -1,0 +1,19 @@
+{
+  "action": "dismissed",
+  "review": {
+    "user": {},
+    "state": null
+  },
+  "pull_request": {
+    "number": 100,
+    "requested_reviewers": []
+  },
+
+  "repository": {
+    "name": "my-repository",
+    "full_name": "ezhlobo/my-repository",
+    "owner": {
+      "login": "ezhlobo"
+    }
+  }
+}

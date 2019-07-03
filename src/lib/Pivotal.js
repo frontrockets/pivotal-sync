@@ -13,92 +13,75 @@ module.exports.setStoryState = (id, state) => {
   return request.put(`stories/${id}`, data).catch(error => console.log(error))
 }
 
-module.exports.setStoryReviews = async (id, issueReviewers) => {
-  const REVIEW_TYPE_NAME = 'Code'
+const getStory = id => request.get(`stories/${id}`).then(result => result.data)
 
-  const story = await request.get(`stories/${id}`).then(result => result.data)
-
-  const projectId = story.project_id
-  const storyOwnerIds = story.owner_ids
-
-  const reviewType = await request
+const getReviewType = (projectId, reviewTypeName) =>
+  request
     .get(`projects/${projectId}?fields=review_types`)
     .then(result =>
-      result.data.review_types.find(item => item.name === REVIEW_TYPE_NAME),
+      result.data.review_types.find(item => item.name === reviewTypeName),
     )
 
-  const members = await request
-    .get(`projects/${projectId}/memberships`)
-    .then(result =>
-      result.data.map(item => ({
-        id: item.person.id,
-        name: item.person.name,
-        email: item.person.email,
-        username: item.person.username,
-      })),
-    )
+const getMembers = projectId =>
+  request.get(`projects/${projectId}/memberships`).then(result =>
+    result.data.map(item => ({
+      id: item.person.id,
+      username: item.person.username,
+    })),
+  )
 
-  const deleteReviews = []
-  const createReviews = []
-  const updateReviews = []
-
-  const currentReviews = await request
+const getStoryReviews = (id, projectId) =>
+  request
     .get(`projects/${projectId}/stories/${id}/reviews`)
     .then(result => result.data)
 
-  currentReviews.forEach(currentReview => {
-    const username = members.find(
-      member => member.id === currentReview.reviewer_id,
-    ).username
+module.exports.setStoryReviews = async (id, login, status) => {
+  const REVIEW_TYPE_NAME = 'Code'
 
-    if (!issueReviewers[username]) {
-      deleteReviews.push({
-        review_type_id: reviewType.id,
-        review_id: currentReview.id,
-      })
-    } else {
-      updateReviews.push({
-        review_type_id: reviewType.id,
-        review_id: currentReview.id,
-        status: issueReviewers[username],
-      })
+  const story = await getStory(id)
+
+  const [reviewType, members, storyReviews] = await Promise.all([
+    getReviewType(story.project_id, REVIEW_TYPE_NAME),
+    getMembers(story.project_id),
+    getStoryReviews(id, story.project_id),
+  ])
+
+  const member = members.find(member => member.username === login)
+
+  if (member) {
+    // We don't allow reviews for own stories
+    if (story.owner_ids.includes(member.id)) {
+      return false
     }
-  })
 
-  Object.keys(issueReviewers).forEach(issueReviewer => {
-    const member = members.find(item => item.username === issueReviewer)
+    const storyReviewForMember = storyReviews.find(
+      review => review.reviewer_id === member.id,
+    )
 
-    if (member) {
-      const hasExistingReview = !!currentReviews.find(
-        currentReview => currentReview.reviewer_id === member.id,
-      )
-      const isOwnerOfStory = storyOwnerIds.includes(member.id)
+    if (status === null) {
+      if (storyReviewForMember) {
+        return request.delete(
+          `projects/${story.project_id}/stories/${id}/reviews/${storyReviewForMember.id}`,
+        )
+      }
+    } else {
+      const data = {
+        review_type_id: reviewType.id,
+        reviewer_id: member.id,
+        status,
+      }
 
-      if (!hasExistingReview && !isOwnerOfStory) {
-        createReviews.push({
-          review_type_id: reviewType.id,
-          reviewer_id: member.id,
-          status: issueReviewers[issueReviewer],
-        })
+      if (storyReviewForMember) {
+        return request.put(
+          `projects/${story.project_id}/stories/${id}/reviews/${storyReviewForMember.id}`,
+          data,
+        )
+      } else {
+        return request.post(
+          `projects/${story.project_id}/stories/${id}/reviews`,
+          data,
+        )
       }
     }
-  })
-
-  await Promise.all([
-    ...deleteReviews.map(({ review_id, ...update }) =>
-      request.delete(
-        `projects/${projectId}/stories/${id}/reviews/${review_id}`,
-        update,
-      ),
-    ),
-    ...createReviews.map(update =>
-      request.post(`projects/${projectId}/stories/${id}/reviews`, update),
-    ),
-    ...updateReviews.map(({ review_id, ...update }) =>
-      request.put(
-        `projects/${projectId}/stories/${id}/reviews/${review_id}`,
-        update,
-      ),
-    ),
-  ])
+  }
 }

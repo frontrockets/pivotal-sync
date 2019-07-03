@@ -1,0 +1,17 @@
+{
+  "action": "review_requested",
+  "number": 100,
+  "pull_request": {
+    "number": 100,
+    "requested_reviewers": []
+  },
+  "requested_reviewer": {},
+
+  "repository": {
+    "name": "my-repository",
+    "full_name": "ezhlobo/my-repository",
+    "owner": {
+      "login": "ezhlobo"
+    }
+  }
+}

@@ -1,36 +1,26 @@
-const _ = require('lodash')
-const myProbotApp = require('..')
-const { Probot } = require('probot')
-const defaultPayload = require('./fixtures/pull_request.merged')
-const Pivotal = require('../lib/Pivotal')
+const app = require('..')
 
-jest.mock('../lib/Pivotal')
+const syncStoryState = require('../syncStoryState')
+const syncCodeReviews = require('../syncCodeReviews')
 
-describe('My Probot app', () => {
-  let probot
-  let payload
+jest.mock('../syncStoryState')
+jest.mock('../syncCodeReviews')
 
-  beforeEach(() => {
-    probot = new Probot({})
-    // Load our app into probot
-    const app = probot.load(myProbotApp)
+beforeEach(() => {
+  syncStoryState.mockClear()
+  syncCodeReviews.mockClear()
+})
 
-    // just return a test token
-    app.app = { getSignedJsonWebToken: () => 'test' }
+it('initializes syncStoryState', () => {
+  const argument = { application: 1 }
+  app(argument)
 
-    payload = _.cloneDeep(defaultPayload)
-  })
+  expect(syncStoryState.mock.calls[0][0]).toBe(argument)
+})
 
-  describe('when pull request merged', () => {
-    const pullRequestBody = 'https://www.pivotaltracker.com/story/show/1'
+it('initializes syncCodeReviews', () => {
+  const argument = { application: 2 }
+  app(argument)
 
-    it('sets "delivered" story state', async () => {
-      await probot.receive({
-        name: 'pull_request',
-        payload: _.set(payload, 'pull_request.body', pullRequestBody),
-      })
-
-      expect(Pivotal.setStoryState).toHaveBeenLastCalledWith('1', 'delivered')
-    })
-  })
+  expect(syncCodeReviews.mock.calls[0][0]).toBe(argument)
 })
