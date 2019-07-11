@@ -45,21 +45,29 @@ const getCurrentStatusForReviews = (reviews, login) => {
       state: _.toUpper(review.state),
     }))
 
+  const githubReviewStateToStatus = {
+    APPROVED: status.APPROVED,
+    CHANGES_REQUESTED: status.REJECTED,
+    COMMENTED: status.IN_PROGRESS,
+  }
+
   const hasPreviousReview = reviewsByLogin.length > 0
 
   if (hasPreviousReview) {
     const approvalOrRejectionReview = reviewsByLogin.find(review =>
-      ['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED'].includes(review.state),
+      ['APPROVED', 'CHANGES_REQUESTED'].includes(review.state),
     )
 
     if (approvalOrRejectionReview) {
-      const githubReviewStateToStatus = {
-        APPROVED: status.APPROVED,
-        CHANGES_REQUESTED: status.REJECTED,
-        COMMENTED: status.IN_PROGRESS,
-      }
-
       return githubReviewStateToStatus[approvalOrRejectionReview.state]
+    }
+
+    const commentReview = reviewsByLogin.find(
+      review => review.state === 'COMMENTED',
+    )
+
+    if (commentReview) {
+      return githubReviewStateToStatus.COMMENTED
     }
   }
 
@@ -105,7 +113,9 @@ module.exports = app => {
       const { review } = context.payload
       const login = review.user.login
 
-      const nextStatus = getCurrentStatusForReviews([review], login)
+      const existedReviews = await getReviews(context)
+
+      const nextStatus = getCurrentStatusForReviews(existedReviews, login)
 
       if (!nextStatus) {
         return Pivotal.setStoryReviews(id, login, status.UNSTARTED)

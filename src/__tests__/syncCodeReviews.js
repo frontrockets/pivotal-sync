@@ -17,6 +17,7 @@ const buildGithubReview = (id, state, user) => ({
   id,
   state,
   user,
+  submitted_at: new Date(`01/02/${id}`),
 })
 
 describe('syncCodeReviews', () => {
@@ -180,8 +181,13 @@ describe('syncCodeReviews', () => {
     })
 
     describe('when it is approved review', () => {
-      it('sets "pass" status of the story review', async () => {
+      beforeEach(() => {
         _.set(payload, 'review.state', 'approved')
+
+        apimock.reply(200, [payload.review])
+      })
+
+      it('sets "pass" status of the story review', async () => {
         await probot.receive({ name: 'pull_request_review', payload })
 
         expect(Pivotal.setStoryReviews).toHaveBeenLastCalledWith(
@@ -193,8 +199,13 @@ describe('syncCodeReviews', () => {
     })
 
     describe('when it is rejected review', () => {
-      it('sets "revise" status of the story review', async () => {
+      beforeEach(() => {
         _.set(payload, 'review.state', 'changes_requested')
+
+        apimock.reply(200, [payload.review])
+      })
+
+      it('sets "revise" status of the story review', async () => {
         await probot.receive({ name: 'pull_request_review', payload })
 
         expect(Pivotal.setStoryReviews).toHaveBeenLastCalledWith(
@@ -206,14 +217,43 @@ describe('syncCodeReviews', () => {
     })
 
     describe('when it is commented review', () => {
-      it('sets "in_review" status of the story review', async () => {
+      beforeEach(() => {
         _.set(payload, 'review.state', 'commented')
+
+        apimock.reply(200, [payload.review])
+      })
+
+      it('sets "in_review" status of the story review', async () => {
         await probot.receive({ name: 'pull_request_review', payload })
 
         expect(Pivotal.setStoryReviews).toHaveBeenLastCalledWith(
           '1',
           reviewerOne.login,
           'in_review',
+        )
+      })
+    })
+
+    describe('when it is commented review after other active reviews', () => {
+      beforeEach(() => {
+        _.set(payload, 'review.state', 'commented')
+
+        apimock.reply(200, [
+          buildGithubReview(301, 'COMMENTED', reviewerOne),
+          buildGithubReview(302, 'APPROVED', reviewerOne),
+          buildGithubReview(303, 'CHANGES_REQUESTED', reviewerOne),
+          buildGithubReview(304, 'COMMENTED', reviewerOne),
+          payload.review,
+        ])
+      })
+
+      it('sets "revise" status of the story review', async () => {
+        await probot.receive({ name: 'pull_request_review', payload })
+
+        expect(Pivotal.setStoryReviews).toHaveBeenLastCalledWith(
+          '1',
+          reviewerOne.login,
+          'revise',
         )
       })
     })
