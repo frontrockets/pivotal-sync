@@ -6,7 +6,10 @@
   },
   "pull_request": {
     "number": 100,
-    "requested_reviewers": []
+    "requested_reviewers": [],
+    "state": "open",
+    "closed_at": null,
+    "merged": false
   },
 
   "repository": {
