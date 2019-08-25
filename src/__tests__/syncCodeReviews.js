@@ -20,6 +20,15 @@ const buildGithubReview = (id, state, user) => ({
   submitted_at: new Date(`01/02/${id}`),
 })
 
+const withClosedPr = payload => {
+  const payloadWithClosedPr = _.cloneDeep(payload)
+  _.set(payloadWithClosedPr, 'pull_request.state', 'closed')
+  _.set(payloadWithClosedPr, 'pull_request.closed_at', Date.now())
+  _.set(payloadWithClosedPr, 'pull_request.merged', false)
+
+  return payloadWithClosedPr
+}
+
 describe('syncCodeReviews', () => {
   let probot
 
@@ -45,6 +54,23 @@ describe('syncCodeReviews', () => {
     _.set(payload, 'pull_request.body', pullRequestBody)
     _.set(payload, 'pull_request.requested_reviewers', [reviewerOne])
     _.set(payload, 'requested_reviewer', reviewerOne)
+
+    describe('when pull requested is closed', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithClosedPr = withClosedPr(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
 
     describe('when it requested the first time on github', () => {
       beforeEach(() => {
@@ -86,6 +112,23 @@ describe('syncCodeReviews', () => {
 
     _.set(payload, 'pull_request.body', pullRequestBody)
     _.set(payload, 'requested_reviewer', reviewerOne)
+
+    describe('when pull requested is closed', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithClosedPr = withClosedPr(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
 
     describe('when there is no previous review', () => {
       beforeEach(() => {
@@ -180,6 +223,23 @@ describe('syncCodeReviews', () => {
       _.set(payload, 'review.user', reviewerOne)
     })
 
+    describe('when pull requested is closed', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithClosedPr = withClosedPr(payload)
+
+        await probot.receive({
+          name: 'pull_request_review',
+          payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
     describe('when it is approved review', () => {
       beforeEach(() => {
         _.set(payload, 'review.state', 'approved')
@@ -266,6 +326,23 @@ describe('syncCodeReviews', () => {
 
     _.set(payload, 'pull_request.body', pullRequestBody)
     _.set(payload, 'review.user', reviewerOne)
+
+    describe('when pull requested is closed', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithClosedPr = withClosedPr(payload)
+
+        await probot.receive({
+          name: 'pull_request_review',
+          payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
 
     describe('when there is no previous review', () => {
       beforeEach(() => {

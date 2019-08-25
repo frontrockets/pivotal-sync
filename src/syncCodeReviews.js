@@ -28,7 +28,11 @@ const getReviews = context =>
     )
 
 const createHandlerWithStoryId = callback => async context => {
-  const { body } = context.payload.pull_request
+  const { body, state } = context.payload.pull_request
+
+  if (state === 'closed') {
+    return null
+  }
 
   const storyLink = extractPivotalLink(body)
 
