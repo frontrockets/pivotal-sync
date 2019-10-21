@@ -1,0 +1,16 @@
+{
+  "action": "unlabeled",
+  "pull_request": {
+    "number": 100,
+    "labels": [{ "name": "WIP" }]
+  },
+  "label": { "name": "WIP" },
+
+  "repository": {
+    "name": "my-repository",
+    "full_name": "ezhlobo/my-repository",
+    "owner": {
+      "login": "ezhlobo"
+    }
+  }
+}

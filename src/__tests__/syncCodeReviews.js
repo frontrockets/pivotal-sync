@@ -29,6 +29,16 @@ const withClosedPr = payload => {
   return payloadWithClosedPr
 }
 
+const withWipLabel = payload => {
+  const output = _.cloneDeep(payload)
+  _.set(output, 'pull_request.labels', [
+    ..._.get(output, 'pull_request.labels', []),
+    { name: 'WIP' },
+  ])
+
+  return output
+}
+
 describe('syncCodeReviews', () => {
   let probot
 
@@ -45,6 +55,7 @@ describe('syncCodeReviews', () => {
 
   const pullRequestBody = 'https://www.pivotaltracker.com/story/show/1'
   const reviewerOne = { login: 'user_first' }
+  const reviewerTwo = { login: 'user_second' }
 
   describe('when one review was requested', () => {
     let payload = _.cloneDeep(
@@ -66,6 +77,23 @@ describe('syncCodeReviews', () => {
         await probot.receive({
           name: 'pull_request',
           payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithWipLabel,
         })
 
         expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
@@ -124,6 +152,23 @@ describe('syncCodeReviews', () => {
         await probot.receive({
           name: 'pull_request',
           payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithWipLabel,
         })
 
         expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
@@ -240,6 +285,23 @@ describe('syncCodeReviews', () => {
       })
     })
 
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request_review',
+          payload: payloadWithWipLabel,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
     describe('when it is approved review', () => {
       beforeEach(() => {
         _.set(payload, 'review.state', 'approved')
@@ -344,6 +406,23 @@ describe('syncCodeReviews', () => {
       })
     })
 
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request_review',
+          payload: payloadWithWipLabel,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
     describe('when there is no previous review', () => {
       beforeEach(() => {
         apimock.reply(200, [])
@@ -424,6 +503,74 @@ describe('syncCodeReviews', () => {
           'in_review',
         )
       })
+    })
+  })
+
+  describe('when the WIP label was added', () => {
+    let payload = _.cloneDeep(require('./fixtures/pull_request.labeled-WIP'))
+
+    _.set(payload, 'pull_request.body', pullRequestBody)
+    _.set(payload, 'pull_request.requested_reviewers', [reviewerOne])
+
+    it('removes all reviewers', async () => {
+      apimock.reply(200, [
+        buildGithubReview(301, 'COMMENTED', reviewerTwo),
+        buildGithubReview(302, 'COMMENTED', reviewerTwo),
+      ])
+      await probot.receive({ name: 'pull_request', payload })
+
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledTimes(2)
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerOne.login,
+        null,
+      )
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerTwo.login,
+        null,
+      )
+    })
+  })
+
+  describe('when the WIP label was removed', () => {
+    let payload = _.cloneDeep(require('./fixtures/pull_request.unlabeled-WIP'))
+
+    _.set(payload, 'pull_request.body', pullRequestBody)
+    _.set(payload, 'pull_request.requested_reviewers', [reviewerOne])
+
+    it('adds new reviewers', async () => {
+      apimock.reply(200, [])
+      await probot.receive({ name: 'pull_request', payload })
+
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledTimes(1)
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerOne.login,
+        'unstarted',
+      )
+    })
+
+    it('adds previous reviewers', async () => {
+      apimock.reply(200, [
+        buildGithubReview(301, 'COMMENTED', reviewerTwo),
+        buildGithubReview(302, 'APPROVED', reviewerTwo),
+        buildGithubReview(303, 'CHANGES_REQUESTED', reviewerTwo),
+        buildGithubReview(304, 'COMMENTED', reviewerOne),
+      ])
+      await probot.receive({ name: 'pull_request', payload })
+
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledTimes(2)
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerTwo.login,
+        'revise',
+      )
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerOne.login,
+        'in_review',
+      )
     })
   })
 })
