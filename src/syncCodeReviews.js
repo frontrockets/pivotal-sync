@@ -1,7 +1,13 @@
 const _ = require('lodash')
 
-const extractPivotalLink = require('./lib/extractPivotalLink')
 const Pivotal = require('./lib/Pivotal')
+const {
+  policyAll,
+  policyNotClosed,
+  policyNotWip,
+  policyWip,
+  policyWithStoryId,
+} = require('./lib/policies')
 
 const status = {
   UNSTARTED: 'unstarted',
@@ -16,7 +22,7 @@ const getPull = context => {
   return _.omit({ ...originalPull, pull_number: originalPull.number }, 'number')
 }
 
-const getReviews = context =>
+const getReviewsOnPullRequest = context =>
   context.github.pulls
     .listReviews(getPull(context))
     .then(result =>
@@ -26,20 +32,6 @@ const getReviews = context =>
           new Date(a.submitted_at).valueOf(),
       ),
     )
-
-const createHandlerWithStoryId = callback => async context => {
-  const { body, state, labels } = context.payload.pull_request
-
-  if (state === 'closed' || labels.some(label => label.name === 'WIP')) {
-    return null
-  }
-
-  const storyLink = extractPivotalLink(body)
-
-  if (storyLink.id) {
-    await callback(context, storyLink.id)
-  }
-}
 
 const getCurrentStatusForReviews = (reviews, login) => {
   const reviewsByLogin = reviews
@@ -81,69 +73,111 @@ const getCurrentStatusForReviews = (reviews, login) => {
 module.exports = app => {
   app.on(
     'pull_request.review_requested',
-    createHandlerWithStoryId(async (context, id) => {
-      const { login } = context.payload.requested_reviewer
+    policyAll(
+      [policyNotClosed, policyNotWip, policyWithStoryId],
+      async context => {
+        const { login } = context.payload.requested_reviewer
 
-      const existedReviews = await getReviews(context)
+        const existedReviews = await getReviewsOnPullRequest(context)
 
-      const hasPreviousReview = !!existedReviews.find(
-        review => review.user.login === login,
-      )
+        const hasPreviousReview = !!existedReviews.find(
+          review => review.user.login === login,
+        )
 
-      if (hasPreviousReview) {
-        return Pivotal.setStoryReviews(id, login, status.IN_PROGRESS)
-      }
+        const storyLinkId = context.storyLinkId
 
-      return Pivotal.setStoryReviews(id, login, status.UNSTARTED)
-    }),
+        if (hasPreviousReview) {
+          return Pivotal.setStoryReviews(storyLinkId, login, status.IN_PROGRESS)
+        }
+
+        return Pivotal.setStoryReviews(storyLinkId, login, status.UNSTARTED)
+      },
+    ),
   )
 
   app.on(
     'pull_request.review_request_removed',
-    createHandlerWithStoryId(async (context, id) => {
-      const { login } = context.payload.requested_reviewer
+    policyAll(
+      [policyNotClosed, policyNotWip, policyWithStoryId],
+      async context => {
+        const { login } = context.payload.requested_reviewer
 
-      const existedReviews = await getReviews(context)
+        const existedReviews = await getReviewsOnPullRequest(context)
 
-      const nextStatus = getCurrentStatusForReviews(existedReviews, login)
+        const nextStatus = getCurrentStatusForReviews(existedReviews, login)
 
-      return Pivotal.setStoryReviews(id, login, nextStatus)
-    }),
+        return Pivotal.setStoryReviews(context.storyLinkId, login, nextStatus)
+      },
+    ),
   )
 
   app.on(
     'pull_request_review.submitted',
-    createHandlerWithStoryId(async (context, id) => {
-      const { review } = context.payload
-      const login = review.user.login
+    policyAll(
+      [policyNotClosed, policyNotWip, policyWithStoryId],
+      async (context, id) => {
+        const { review } = context.payload
+        const login = review.user.login
 
-      const existedReviews = await getReviews(context)
+        const existedReviews = await getReviewsOnPullRequest(context)
 
-      const nextStatus = getCurrentStatusForReviews(existedReviews, login)
+        const nextStatus = getCurrentStatusForReviews(existedReviews, login)
 
-      if (!nextStatus) {
-        return Pivotal.setStoryReviews(id, login, status.UNSTARTED)
-      }
+        if (!nextStatus) {
+          return Pivotal.setStoryReviews(
+            context.storyLinkId,
+            login,
+            status.UNSTARTED,
+          )
+        }
 
-      return Pivotal.setStoryReviews(id, login, nextStatus)
-    }),
+        return Pivotal.setStoryReviews(context.storyLinkId, login, nextStatus)
+      },
+    ),
   )
 
   app.on(
     'pull_request_review.dismissed',
-    createHandlerWithStoryId(async (context, id) => {
-      const { user } = context.payload.review
-      const login = user.login
+    policyAll(
+      [policyNotClosed, policyNotWip, policyWithStoryId],
+      async context => {
+        const { user } = context.payload.review
+        const login = user.login
 
-      const existedReviews = await getReviews(context)
+        const existedReviews = await getReviewsOnPullRequest(context)
 
-      const nextStatus = getCurrentStatusForReviews(existedReviews, login)
+        const nextStatus = getCurrentStatusForReviews(existedReviews, login)
 
-      if (!nextStatus) {
-        return Pivotal.setStoryReviews(id, login, status.IN_PROGRESS)
-      }
+        if (!nextStatus) {
+          return Pivotal.setStoryReviews(
+            context.storyLinkId,
+            login,
+            status.IN_PROGRESS,
+          )
+        }
 
-      return Pivotal.setStoryReviews(id, login, nextStatus)
-    }),
+        return Pivotal.setStoryReviews(context.storyLinkId, login, nextStatus)
+      },
+    ),
+  )
+
+  app.on(
+    'pull_request.labeled',
+    policyAll(
+      [policyNotClosed, policyWip, policyWithStoryId],
+      async context => {
+        const { requested_reviewers } = context.payload.pull_request
+
+        return Promise.all(
+          requested_reviewers.map(requestedReviewer =>
+            Pivotal.setStoryReviews(
+              context.storyLinkId,
+              requestedReviewer.login,
+              null,
+            ),
+          ),
+        )
+      },
+    ),
   )
 }

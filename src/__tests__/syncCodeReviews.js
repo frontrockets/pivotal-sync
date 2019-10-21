@@ -55,6 +55,7 @@ describe('syncCodeReviews', () => {
 
   const pullRequestBody = 'https://www.pivotaltracker.com/story/show/1'
   const reviewerOne = { login: 'user_first' }
+  const reviewerTwo = { login: 'user_second' }
 
   describe('when one review was requested', () => {
     let payload = _.cloneDeep(
@@ -293,7 +294,7 @@ describe('syncCodeReviews', () => {
         const payloadWithWipLabel = withWipLabel(payload)
 
         await probot.receive({
-          name: 'pull_request',
+          name: 'pull_request_review',
           payload: payloadWithWipLabel,
         })
 
@@ -414,7 +415,7 @@ describe('syncCodeReviews', () => {
         const payloadWithWipLabel = withWipLabel(payload)
 
         await probot.receive({
-          name: 'pull_request',
+          name: 'pull_request_review',
           payload: payloadWithWipLabel,
         })
 
@@ -502,6 +503,31 @@ describe('syncCodeReviews', () => {
           'in_review',
         )
       })
+    })
+  })
+
+  describe('when the WIP label was added', () => {
+    let payload = _.cloneDeep(require('./fixtures/pull_request.labeled-WIP'))
+
+    _.set(payload, 'pull_request.body', pullRequestBody)
+    _.set(payload, 'pull_request.requested_reviewers', [
+      reviewerOne,
+      reviewerTwo,
+    ])
+
+    it('removes all reviewers', async () => {
+      await probot.receive({ name: 'pull_request', payload })
+
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerOne.login,
+        null,
+      )
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerTwo.login,
+        null,
+      )
     })
   })
 })

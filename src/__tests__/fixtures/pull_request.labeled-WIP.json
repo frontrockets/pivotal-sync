@@ -1,0 +1,8 @@
+{
+  "action": "labeled",
+  "pull_request": {
+    "number": 1,
+    "labels": [{ "name": "WIP" }]
+  },
+  "label": { "name": "WIP" }
+}

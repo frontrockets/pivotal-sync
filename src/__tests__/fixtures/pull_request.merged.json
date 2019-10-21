@@ -1,8 +1,0 @@
-{
-  "action": "closed",
-  "pull_request": {
-    "number": 1,
-    "merged": true,
-    "labels": []
-  }
-}
