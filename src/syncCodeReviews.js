@@ -163,11 +163,10 @@ module.exports = app => {
 
   app.on(
     'pull_request.labeled',
-    policyAll(
-      [policyNotClosed, policyWip, policyWithStoryId],
-      async context => {
-        const { requested_reviewers } = context.payload.pull_request
+    policyAll([policyNotClosed, policyWithStoryId], async context => {
+      const { requested_reviewers } = context.payload.pull_request
 
+      if (context.payload.label.name === 'WIP') {
         return Promise.all(
           requested_reviewers.map(requestedReviewer =>
             Pivotal.setStoryReviews(
@@ -177,7 +176,56 @@ module.exports = app => {
             ),
           ),
         )
-      },
-    ),
+      }
+    }),
+  )
+
+  app.on(
+    'pull_request.unlabeled',
+    policyAll([policyNotClosed, policyWithStoryId], async context => {
+      if (context.payload.label.name === 'WIP') {
+        const getNewlyRequestedReviews = () => {
+          return context.payload.pull_request.requested_reviewers.map(
+            reviewer => ({ login: reviewer.login, status: status.UNSTARTED }),
+          )
+        }
+
+        const getExistingReviews = async requestedReviewers => {
+          const existingReviews = await getReviewsOnPullRequest(context)
+          const existingReviewers = _.groupBy(existingReviews, 'user.login')
+
+          return _.map(existingReviewers, (reviews, login) => {
+            const hasPrevReviews = _.find(
+              requestedReviewers,
+              user => user.login === login,
+            )
+            const nextStatus = hasPrevReviews
+              ? status.IN_PROGRESS
+              : getCurrentStatusForReviews(reviews, login)
+
+            return { login, status: nextStatus }
+          })
+        }
+
+        const newRequests = getNewlyRequestedReviews()
+        const existingReviews = await getExistingReviews(newRequests)
+
+        const updates = _.unionBy(
+          existingReviews,
+          newRequests,
+          _.property('login'),
+        )
+
+        return Promise.all(
+          updates.map(update =>
+            Pivotal.setStoryReviews(
+              context.storyLinkId,
+              update.login,
+              update.status,
+            ),
+          ),
+        )
+      }
+    }),
   )
 }

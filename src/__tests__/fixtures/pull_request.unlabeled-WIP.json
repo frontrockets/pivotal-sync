@@ -1,5 +1,5 @@
 {
-  "action": "labeled",
+  "action": "unlabeled",
   "pull_request": {
     "number": 100,
     "labels": [{ "name": "WIP" }]

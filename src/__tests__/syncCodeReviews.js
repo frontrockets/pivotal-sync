@@ -530,4 +530,45 @@ describe('syncCodeReviews', () => {
       )
     })
   })
+
+  describe('when the WIP label was removed', () => {
+    let payload = _.cloneDeep(require('./fixtures/pull_request.unlabeled-WIP'))
+
+    _.set(payload, 'pull_request.body', pullRequestBody)
+    _.set(payload, 'pull_request.requested_reviewers', [reviewerOne])
+
+    it('adds new reviewers', async () => {
+      apimock.reply(200, [])
+      await probot.receive({ name: 'pull_request', payload })
+
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledTimes(1)
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerOne.login,
+        'unstarted',
+      )
+    })
+
+    it('adds previous reviewers', async () => {
+      apimock.reply(200, [
+        buildGithubReview(301, 'COMMENTED', reviewerTwo),
+        buildGithubReview(302, 'APPROVED', reviewerTwo),
+        buildGithubReview(303, 'CHANGES_REQUESTED', reviewerTwo),
+        buildGithubReview(304, 'COMMENTED', reviewerOne),
+      ])
+      await probot.receive({ name: 'pull_request', payload })
+
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledTimes(2)
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerTwo.login,
+        'revise',
+      )
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
+        '1',
+        reviewerOne.login,
+        'in_review',
+      )
+    })
+  })
 })
