@@ -9,7 +9,8 @@
     "requested_reviewers": [],
     "state": "open",
     "closed_at": null,
-    "merged": false
+    "merged": false,
+    "labels": []
   },
 
   "repository": {

@@ -29,6 +29,16 @@ const withClosedPr = payload => {
   return payloadWithClosedPr
 }
 
+const withWipLabel = payload => {
+  const output = _.cloneDeep(payload)
+  _.set(output, 'pull_request.labels', [
+    ..._.get(output, 'pull_request.labels', []),
+    { name: 'WIP' },
+  ])
+
+  return output
+}
+
 describe('syncCodeReviews', () => {
   let probot
 
@@ -66,6 +76,23 @@ describe('syncCodeReviews', () => {
         await probot.receive({
           name: 'pull_request',
           payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithWipLabel,
         })
 
         expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
@@ -124,6 +151,23 @@ describe('syncCodeReviews', () => {
         await probot.receive({
           name: 'pull_request',
           payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithWipLabel,
         })
 
         expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
@@ -240,6 +284,23 @@ describe('syncCodeReviews', () => {
       })
     })
 
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithWipLabel,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
     describe('when it is approved review', () => {
       beforeEach(() => {
         _.set(payload, 'review.state', 'approved')
@@ -338,6 +399,23 @@ describe('syncCodeReviews', () => {
         await probot.receive({
           name: 'pull_request_review',
           payload: payloadWithClosedPr,
+        })
+
+        expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('when pull request is labeled with WIP label', () => {
+      beforeEach(() => {
+        apimock.reply(200, [])
+      })
+
+      it('does not sync reviews', async () => {
+        const payloadWithWipLabel = withWipLabel(payload)
+
+        await probot.receive({
+          name: 'pull_request',
+          payload: payloadWithWipLabel,
         })
 
         expect(Pivotal.setStoryReviews).not.toHaveBeenCalled()

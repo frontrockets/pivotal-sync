@@ -28,9 +28,9 @@ const getReviews = context =>
     )
 
 const createHandlerWithStoryId = callback => async context => {
-  const { body, state } = context.payload.pull_request
+  const { body, state, labels } = context.payload.pull_request
 
-  if (state === 'closed') {
+  if (state === 'closed' || labels.some(label => label.name === 'WIP')) {
     return null
   }
 
