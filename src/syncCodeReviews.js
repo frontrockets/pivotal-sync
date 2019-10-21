@@ -167,13 +167,21 @@ module.exports = app => {
       const { requested_reviewers } = context.payload.pull_request
 
       if (context.payload.label.name === 'WIP') {
+        const existingReviews = await getReviewsOnPullRequest(context)
+
+        const logins = []
+
+        requested_reviewers.forEach(requestedReviewer =>
+          logins.push(requestedReviewer.login),
+        )
+
+        existingReviews.forEach(existingReview =>
+          logins.push(existingReview.user.login),
+        )
+
         return Promise.all(
-          requested_reviewers.map(requestedReviewer =>
-            Pivotal.setStoryReviews(
-              context.storyLinkId,
-              requestedReviewer.login,
-              null,
-            ),
+          _.uniq(logins).map(login =>
+            Pivotal.setStoryReviews(context.storyLinkId, login, null),
           ),
         )
       }

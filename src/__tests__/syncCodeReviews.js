@@ -510,14 +510,16 @@ describe('syncCodeReviews', () => {
     let payload = _.cloneDeep(require('./fixtures/pull_request.labeled-WIP'))
 
     _.set(payload, 'pull_request.body', pullRequestBody)
-    _.set(payload, 'pull_request.requested_reviewers', [
-      reviewerOne,
-      reviewerTwo,
-    ])
+    _.set(payload, 'pull_request.requested_reviewers', [reviewerOne])
 
     it('removes all reviewers', async () => {
+      apimock.reply(200, [
+        buildGithubReview(301, 'COMMENTED', reviewerTwo),
+        buildGithubReview(302, 'COMMENTED', reviewerTwo),
+      ])
       await probot.receive({ name: 'pull_request', payload })
 
+      expect(Pivotal.setStoryReviews).toHaveBeenCalledTimes(2)
       expect(Pivotal.setStoryReviews).toHaveBeenCalledWith(
         '1',
         reviewerOne.login,
