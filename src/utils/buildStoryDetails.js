@@ -2,6 +2,7 @@ const _ = require('lodash')
 
 const storyState = {
   DELIVERED: 'delivered',
+  FINISHED: 'finished',
 }
 
 const mapGhReviewsToPivotal = {
@@ -11,8 +12,11 @@ const mapGhReviewsToPivotal = {
   NEW: 'unstarted',
 }
 
-module.exports = ({ pulls }) => {
-  const state = isEveryPullMerged(pulls) ? storyState.DELIVERED : null
+module.exports = ({ story, pulls }) => {
+  const state =
+    isEveryPullMerged(pulls) && isCurrentStateFinished(story)
+      ? storyState.DELIVERED
+      : null
 
   const reviewsPerRepo = _(pulls)
     .filter(pull => !pull.isWip)
@@ -31,3 +35,6 @@ const convertGhReviewsToPivotal = object =>
 
 const isEveryPullMerged = pulls =>
   pulls.length ? pulls.every(pull => pull.isMerged) : false
+
+const isCurrentStateFinished = story =>
+  story.currentState === storyState.FINISHED

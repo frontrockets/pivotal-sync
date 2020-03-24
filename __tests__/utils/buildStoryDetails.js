@@ -77,8 +77,21 @@ describe('output', () => {
       expect(result).toMatchObject({ state: null })
     })
 
-    it('is DELIVERED if all pulls are merged', () => {
+    it('is NULL if all pulls are merged and previous state is UNSTARTED', () => {
       const result = buildStoryDetails({
+        story: {
+          currentState: 'unstarted',
+        },
+        pulls: [fakePull({ isMerged: true })],
+      })
+      expect(result).toMatchObject({ state: null })
+    })
+
+    it('is DELIVERED if all pulls are merged and previous state s FINISHED', () => {
+      const result = buildStoryDetails({
+        story: {
+          currentState: 'finished',
+        },
         pulls: [
           fakePull({ isMerged: true }),
           fakePull({ isMerged: true }),
