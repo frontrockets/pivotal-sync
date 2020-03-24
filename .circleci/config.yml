@@ -45,7 +45,7 @@ jobs:
 
       - run:
           name: Deploy
-          command: now --prod -t $NOW_TOKEN
+          command: now --prod --scope ezhlobo --confirm --token $NOW_TOKEN
 
 workflows:
   version: 2
