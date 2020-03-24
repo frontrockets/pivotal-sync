@@ -52,6 +52,7 @@ const getReviewStatesByUser = ({ reviews, author }) => {
   const result = {}
 
   _(reviews)
+    .reverse()
     .groupBy('user')
     .omit(author)
     .mapValues(reviews => reviews.map(_.property('state')))

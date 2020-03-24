@@ -44,6 +44,10 @@ describe('.get', () => {
             user: { login: 'user2' },
             state: 'CHANGES_REQUESTED',
           }),
+          fakePullReview({
+            user: { login: 'user3' },
+            state: 'CHANGES_REQUESTED',
+          }),
           fakePullReview({ user: { login: 'user3' }, state: 'APPROVED' }),
           fakePullReview({ user: { login: 'user3' }, state: 'COMMENTED' }),
         ])
