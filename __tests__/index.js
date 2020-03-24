@@ -10,6 +10,7 @@ it('is a function', () => {
 const events = [
   'pull_request.labeled',
   'pull_request.unlabeled',
+  'pull_request.edited',
   'pull_request.review_requested',
   'pull_request.review_request_removed',
   'pull_request_review.submitted',

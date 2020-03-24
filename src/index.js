@@ -24,6 +24,7 @@ async function sync(context) {
 module.exports = app => {
   app.on('pull_request.labeled', sync)
   app.on('pull_request.unlabeled', sync)
+  app.on('pull_request.edited', sync)
   app.on('pull_request.review_requested', sync)
   app.on('pull_request.review_request_removed', sync)
   app.on('pull_request_review.submitted', sync)
