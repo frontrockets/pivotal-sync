@@ -7,10 +7,12 @@ const STATE_COMMENTED = 'COMMENTED'
 const STATE_NEW = 'NEW'
 
 const getAllReviews = async (context, params) => {
-  const reviews = await context.github.pulls.listReviews({
-    ...params,
-    per_page: 100,
-  })
+  const reviews = await context.github.pulls
+    .listReviews({
+      ...params,
+      per_page: 100,
+    })
+    .then(response => response.data)
 
   return reviews.map(review => ({
     id: review.id,
@@ -20,7 +22,10 @@ const getAllReviews = async (context, params) => {
 }
 
 module.exports.get = async (context, params) => {
-  const pull = await context.github.pulls.get(params)
+  const pull = await context.github.pulls
+    .get(params)
+    .then(response => response.data)
+
   const reviews = await getAllReviews(context, params)
 
   injectNewReviewRequests({ reviews, pull })

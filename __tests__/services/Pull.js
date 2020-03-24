@@ -3,10 +3,20 @@ const Pull = require('../../src/services/Pull')
 describe('.get', () => {
   let context
 
+  function mockPullsGet(data) {
+    const response = Promise.resolve({ data })
+    context.github.pulls.get = jest.fn().mockReturnValue(response)
+  }
+
+  function mockPullsListReviews(data) {
+    const response = Promise.resolve({ data })
+    context.github.pulls.listReviews = jest.fn().mockReturnValue(response)
+  }
+
   beforeEach(() => {
     context = fakeContext()
-    context.github.pulls.get = jest.fn().mockReturnValue(fakePull())
-    context.github.pulls.listReviews = jest.fn().mockReturnValue([])
+    mockPullsGet(fakePull())
+    mockPullsListReviews([])
   })
 
   it('is a Function', () => {
@@ -25,7 +35,7 @@ describe('.get', () => {
       })
 
       it('contains all reviews', async () => {
-        context.github.pulls.listReviews.mockReturnValue([
+        mockPullsListReviews([
           fakePullReview({ user: { login: 'user4' }, state: 'DISMISSED' }),
           fakePullReview({ user: { login: 'user1' }, state: 'DISMISSED' }),
           fakePullReview({ user: { login: 'user1' }, state: 'COMMENTED' }),
@@ -47,12 +57,12 @@ describe('.get', () => {
       })
 
       it('contains reviews that are just requested', async () => {
-        context.github.pulls.get.mockReturnValue(
+        mockPullsGet(
           fakePull({
             requested_reviewers: [{ login: 'user1' }, { login: 'user2' }],
           }),
         )
-        context.github.pulls.listReviews.mockReturnValue([
+        mockPullsListReviews([
           fakePullReview({ user: { login: 'user3' }, state: 'APPROVED' }),
         ])
 
@@ -66,10 +76,8 @@ describe('.get', () => {
       })
 
       it('does not contain review from the author', async () => {
-        context.github.pulls.get.mockReturnValue(
-          fakePull({ user: { login: 'hero' } }),
-        )
-        context.github.pulls.listReviews.mockReturnValue([
+        mockPullsGet(fakePull({ user: { login: 'hero' } }))
+        mockPullsListReviews([
           fakePullReview({ user: { login: 'hero' }, state: 'APPROVED' }),
           fakePullReview({ user: { login: 'basic' }, state: 'APPROVED' }),
         ])
@@ -83,26 +91,24 @@ describe('.get', () => {
 
     describe('where isMerged', () => {
       it('is true', async () => {
-        context.github.pulls.get = jest.fn(() => fakePull({ merged: true }))
+        mockPullsGet(fakePull({ merged: true }))
         await expectResultContaining({ isMerged: true })
       })
     })
 
     describe('where isWip', () => {
       it('is falsy by default', async () => {
-        context.github.pulls.get = jest.fn(() => fakePull())
+        mockPullsGet(fakePull())
         await expectResultContaining({ isWip: false })
       })
 
       it('is truthy when pull is Draft', async () => {
-        context.github.pulls.get = jest.fn(() => fakePull({ draft: true }))
+        mockPullsGet(fakePull({ draft: true }))
         await expectResultContaining({ isWip: true })
       })
 
       it('is truthy when contains WIP label', async () => {
-        context.github.pulls.get = jest.fn(() =>
-          fakePull({ labels: [{ name: 'WIP' }] }),
-        )
+        mockPullsGet(fakePull({ labels: [{ name: 'WIP' }] }))
         await expectResultContaining({ isWip: true })
       })
     })

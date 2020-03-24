@@ -27,16 +27,16 @@ describe('.update', () => {
 
       reqPivotal.get('/projects/19?fields=review_types').reply(200, {
         review_types: [
-          { id: 'tid1', name: 'PR:repo1' },
-          { id: 'tid2', name: 'PR:repo2' },
+          { id: 1001, name: 'PR:repo1' },
+          { id: 1002, name: 'PR:repo2' },
         ],
       })
 
       reqPivotal
         .get('/projects/19/memberships')
         .reply(200, [
-          { person: { id: 'uid1', username: 'user1' } },
-          { person: { id: 'uid2', username: 'user2' } },
+          { person: { id: 9001, username: 'user1' } },
+          { person: { id: 9002, username: 'user2' } },
         ])
 
       story = fakeStory({
@@ -45,20 +45,20 @@ describe('.update', () => {
         reviews: [
           fakeStoryReview({
             id: 1,
-            review_type_id: 'tid1',
-            reviewer_id: 'uid1',
+            review_type_id: 1001,
+            reviewer_id: 9001,
             status: 'unstarted',
           }),
           fakeStoryReview({
             id: 2,
-            review_type_id: 'tid1',
-            reviewer_id: 'uid2',
+            review_type_id: 1001,
+            reviewer_id: 9002,
             status: 'unstarted',
           }),
           fakeStoryReview({
             id: 3,
-            review_type_id: 'tid2',
-            reviewer_id: 'uid2',
+            review_type_id: 1002,
+            reviewer_id: 9002,
             status: 'unstarted',
           }),
         ],
@@ -66,8 +66,12 @@ describe('.update', () => {
     })
 
     it('removes all existing and not matching reviews', async () => {
-      const deleteReq1 = reqPivotal.delete('/stories/421/reviews/2').reply(200)
-      const deleteReq2 = reqPivotal.delete('/stories/421/reviews/3').reply(200)
+      const deleteReq1 = reqPivotal
+        .delete('/projects/19/stories/421/reviews/2')
+        .reply(200)
+      const deleteReq2 = reqPivotal
+        .delete('/projects/19/stories/421/reviews/3')
+        .reply(200)
 
       await Story.update({
         story,
@@ -84,9 +88,9 @@ describe('.update', () => {
 
     it('adds all missing reviews', async () => {
       const reqCreate1 = reqPivotal
-        .post('/stories/421/reviews', {
-          review_type_id: 'tid2',
-          reviewer_id: 'uid1',
+        .post('/projects/19/stories/421/reviews', {
+          review_type_id: 1002,
+          reviewer_id: 9001,
           status: 'unstarted',
         })
         .reply(200)
@@ -106,10 +110,10 @@ describe('.update', () => {
 
     it('updates all existing and matching reviews', async () => {
       const reqUpdate1 = reqPivotal
-        .put('/stories/421/reviews/1', { status: 'next' })
+        .put('/projects/19/stories/421/reviews/1', { status: 'next' })
         .reply(200)
       const reqUpdate2 = reqPivotal
-        .put('/stories/421/reviews/2', { status: 'next' })
+        .put('/projects/19/stories/421/reviews/2', { status: 'next' })
         .reply(200)
 
       await Story.update({
@@ -127,15 +131,17 @@ describe('.update', () => {
     })
 
     it('removes, adds and updates reviews at the same time', async () => {
-      const reqDelete = reqPivotal.delete('/stories/421/reviews/1').reply(200)
+      const reqDelete = reqPivotal
+        .delete('/projects/19/stories/421/reviews/1')
+        .reply(200)
       const reqUpdate = reqPivotal
-        .put('/stories/421/reviews/2', { status: 'next' })
+        .put('/projects/19/stories/421/reviews/2', { status: 'next' })
         .reply(200)
       const reqCreate = reqPivotal
-        .post('/stories/421/reviews', {
+        .post('/projects/19/stories/421/reviews', {
           status: 'unstarted',
-          review_type_id: 'tid2',
-          reviewer_id: 'uid1',
+          review_type_id: 1002,
+          reviewer_id: 9001,
         })
         .reply(200)
 

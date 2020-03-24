@@ -40,8 +40,8 @@ module.exports = async function updateReviews({
     .transform((result, value, key) => {
       _.mapKeys(value, (status, uid) => {
         result.push({
-          review_type_id: key,
-          reviewer_id: uid,
+          review_type_id: parseInt(key),
+          reviewer_id: parseInt(uid),
           status,
         })
       })
@@ -73,15 +73,18 @@ module.exports = async function updateReviews({
     }
   })
 
+  const getStoryUrl = (action = '') =>
+    `projects/${story.projectId}/stories/${story.id}/${action}`
+
   const requests = [
     ...staleReviews.map(review =>
-      request.delete(`stories/${story.id}/reviews/${review.id}`),
+      request.delete(getStoryUrl(`reviews/${review.id}`)),
     ),
-    ...newReviews.map(review =>
-      request.post(`stories/${story.id}/reviews`, review),
-    ),
+
+    ...newReviews.map(review => request.post(getStoryUrl('reviews'), review)),
+
     ...modifiedReviews.map(review =>
-      request.put(`stories/${story.id}/reviews/${review.id}`, {
+      request.put(getStoryUrl(`reviews/${review.id}`), {
         status: review.status,
       }),
     ),
