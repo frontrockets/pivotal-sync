@@ -24,7 +24,9 @@
     "probot-serverless-now": "2.1.2"
   },
   "devDependencies": {
+    "dotenv": "^8.2.0",
     "jest": "25.1.0",
+    "jest-watch-typeahead": "^0.4.2",
     "lodash": "4.17.15",
     "nock": "12.0.2",
     "nodemon": "2.0.2",
@@ -42,7 +44,11 @@
     ]
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "watchPlugins": [
+      "jest-watch-typeahead/filename",
+      "jest-watch-typeahead/testname"
+    ]
   },
   "prettier": {
     "semi": false,
