@@ -28,7 +28,7 @@ jobs:
           when: always
 
       - run:
-          command: yarn test
+          command: yarn test --ci
           when: always
 
   deploy:
@@ -45,7 +45,7 @@ jobs:
 
       - run:
           name: Deploy
-          command: now --target production -t $NOW_TOKEN
+          command: now --prod -t $NOW_TOKEN
 
 workflows:
   version: 2
@@ -58,5 +58,4 @@ workflows:
             - prepare
           filters:
             branches:
-              only:
-                - master
+              only: master

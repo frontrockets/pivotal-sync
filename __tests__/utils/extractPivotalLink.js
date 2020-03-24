@@ -1,4 +1,4 @@
-const extractPivotalLink = require('../../lib/extractPivotalLink')
+const extractPivotalLink = require('../../src/utils/extractPivotalLink')
 
 const storyLinkFull = id => `https://www.pivotaltracker.com/story/show/${id}`
 
