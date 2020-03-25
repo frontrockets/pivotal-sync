@@ -14,7 +14,7 @@ async function sync(context) {
       initiator: {
         owner: _.get(context, 'payload.organization.login'),
         repo: _.get(context, 'payload.repository.name'),
-        pull_number: _.get(context, 'payload.number'),
+        pull_number: _.get(context, 'payload.pull_request.number'),
       },
       context,
     })

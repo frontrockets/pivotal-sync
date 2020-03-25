@@ -37,10 +37,9 @@ describe.each(events)('Subscribed to: %s', eventName => {
     const handler = app.on.mock.calls.find(call => call[0] === eventName)[1]
     const context = {
       payload: {
-        number: 'Number',
         organization: { login: 'Owner' },
         repository: { name: 'Repo' },
-        pull_request: { body: pivotalLink },
+        pull_request: { number: 'Number', body: pivotalLink },
       },
     }
     await handler(context)
