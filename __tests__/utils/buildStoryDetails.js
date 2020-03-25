@@ -60,6 +60,7 @@ describe('output', () => {
       })
       expect(result.reviewsPerRepo).toEqual({
         one: { u: 'unstarted' },
+        two: {},
       })
     })
   })

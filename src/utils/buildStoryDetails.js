@@ -19,9 +19,14 @@ module.exports = ({ story, pulls }) => {
       : null
 
   const reviewsPerRepo = _(pulls)
-    .filter(pull => !pull.isWip)
     .groupBy('repoName')
-    .mapValues(value => convertGhReviewsToPivotal(value[0].reviewsByUser))
+    .mapValues(([value]) => {
+      if (value.isWip) {
+        return {}
+      }
+
+      return convertGhReviewsToPivotal(value.reviewsByUser)
+    })
     .value()
 
   return {
