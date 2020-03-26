@@ -2,6 +2,7 @@ const bot = require('../src/index')
 const refreshStoryDetails = require('../src/refreshStoryDetails')
 
 jest.mock('../src/refreshStoryDetails')
+jest.mock('../src/utils/queue', () => (params, action) => action())
 
 it('is a function', () => {
   expect(bot).toBeInstanceOf(Function)

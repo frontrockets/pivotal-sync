@@ -14,12 +14,9 @@ const request = axios.create({
 const getStory = id => {
   const fields = [
     'current_state',
-    'requested_by_id',
-    'url',
     'project_id',
     'owner_ids',
     'reviews',
-    'labels',
     'pull_requests',
   ]
 

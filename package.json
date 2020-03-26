@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "axios": "0.19.2",
+    "firebase-admin": "^8.10.0",
     "probot": "9.11.1",
     "probot-serverless-now": "2.1.2"
   },
