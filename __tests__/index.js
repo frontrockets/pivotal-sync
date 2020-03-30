@@ -2,10 +2,31 @@ const bot = require('../src/index')
 const refreshStoryDetails = require('../src/refreshStoryDetails')
 
 jest.mock('../src/refreshStoryDetails')
-jest.mock('../src/utils/queue', () => (params, action) => action())
+
+beforeEach(() => {
+  refreshStoryDetails.mockReset()
+})
 
 it('is a function', () => {
   expect(bot).toBeInstanceOf(Function)
+})
+
+const { createProbot } = require('probot')
+
+it('handles multiple requests', async () => {
+  const pivotalLink = 'https://www.pivotaltracker.com/story/show/100'
+  const payload = {
+    action: 'review_requested',
+    pull_request: { body: pivotalLink },
+  }
+  const probot = createProbot({ id: 1, cert: 'test', githubToken: 'test' })
+  probot.load(bot)
+  await Promise.all([
+    probot.receive({ name: 'pull_request', payload }),
+    probot.receive({ name: 'pull_request', payload }),
+  ])
+
+  expect(refreshStoryDetails).toHaveBeenCalledTimes(1)
 })
 
 const events = [
@@ -24,12 +45,10 @@ describe.each(events)('Subscribed to: %s', eventName => {
 
   beforeEach(() => {
     app.on = jest.fn()
-    refreshStoryDetails.mockReset()
   })
 
   it('it subscribed', () => {
     bot(app)
-
     expect(app.on).toHaveBeenCalledWith(eventName, expect.anything())
   })
 

@@ -44,10 +44,6 @@ jobs:
             yarn global add now
 
       - run:
-          name: Create Credentials File
-          command: echo $DB_CREDS > .firebase-creds.json
-
-      - run:
           name: Deploy
           command: now --prod --scope ezhlobo --confirm --token $NOW_TOKEN
 

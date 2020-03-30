@@ -10,7 +10,7 @@ async function sync(context) {
   const isPivotalLinkPresent = Boolean(storyLink.id)
 
   if (isPivotalLinkPresent) {
-    await queue({ maxTime: 4000, storyId: storyLink.id }, () =>
+    await queue({ maxTime: 4000, key: storyLink.id }, () =>
       refreshStoryDetails({
         storyId: storyLink.id,
         initiator: {

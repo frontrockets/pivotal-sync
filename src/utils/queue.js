@@ -1,27 +1,14 @@
-const firebase = require('firebase-admin')
+const fs = require('fs')
 
-const creds = require('../../.firebase-creds.json')
+module.exports = async function queue({ maxTime, key }, action) {
+  const filepath = `/tmp/pivotal-sync-${key}`
 
-if (!firebase.apps.length) {
-  firebase.initializeApp({
-    credential: firebase.credential.cert(creds),
-    databaseURL: 'https://pivotal-sync-queue.firebaseio.com',
-  })
-}
+  const isInQueue = fs.existsSync(filepath)
+  const isPrevReqSlow =
+    isInQueue && Date.now() - fs.statSync(filepath).mtimeMs > maxTime
 
-const db = firebase.firestore()
-
-module.exports = async function queue({ maxTime, storyId }, action) {
-  const ref = db.doc(`queue/${storyId}`)
-  const docInQueue = await ref.get()
-
-  const notInQueue = !docInQueue.exists
-  const previousReqIsSlow =
-    docInQueue.exists &&
-    Date.now() - docInQueue.data().created_at.toMillis() > maxTime
-
-  if (notInQueue || previousReqIsSlow) {
-    await ref.set({ created_at: firebase.firestore.Timestamp.now() })
+  if (!isInQueue || isPrevReqSlow) {
+    fs.writeFileSync(filepath)
 
     let errorInAction
     try {
@@ -30,7 +17,7 @@ module.exports = async function queue({ maxTime, storyId }, action) {
       errorInAction = error
     }
 
-    await ref.delete()
+    fs.unlinkSync(filepath)
 
     if (errorInAction) {
       throw Error(errorInAction)
