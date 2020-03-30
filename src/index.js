@@ -25,6 +25,7 @@ async function sync(context) {
 }
 
 module.exports = app => {
+  app.on('pull_request.closed', sync)
   app.on('pull_request.labeled', sync)
   app.on('pull_request.unlabeled', sync)
   app.on('pull_request.edited', sync)

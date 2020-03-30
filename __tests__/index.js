@@ -30,6 +30,7 @@ it('handles multiple requests', async () => {
 })
 
 const events = [
+  'pull_request.closed',
   'pull_request.labeled',
   'pull_request.unlabeled',
   'pull_request.edited',
