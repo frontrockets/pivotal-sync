@@ -1,6 +1,10 @@
 const bot = require('../src/index')
 const refreshStoryDetails = require('../src/refreshStoryDetails')
 
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  writeFileSync: () => null,
+}))
 jest.mock('../src/refreshStoryDetails')
 
 beforeEach(() => {
@@ -9,24 +13,6 @@ beforeEach(() => {
 
 it('is a function', () => {
   expect(bot).toBeInstanceOf(Function)
-})
-
-const { createProbot } = require('probot')
-
-it('handles multiple requests', async () => {
-  const pivotalLink = 'https://www.pivotaltracker.com/story/show/100'
-  const payload = {
-    action: 'review_requested',
-    pull_request: { body: pivotalLink },
-  }
-  const probot = createProbot({ id: 1, cert: 'test', githubToken: 'test' })
-  probot.load(bot)
-  await Promise.all([
-    probot.receive({ name: 'pull_request', payload }),
-    probot.receive({ name: 'pull_request', payload }),
-  ])
-
-  expect(refreshStoryDetails).toHaveBeenCalledTimes(1)
 })
 
 const events = [
