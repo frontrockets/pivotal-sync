@@ -20,13 +20,15 @@ module.exports = ({ story, pulls }) => {
 
   const reviewsPerRepo = _(pulls)
     .groupBy('repoName')
-    .mapValues(([value]) => {
-      if (value.isWip) {
-        return {}
-      }
+    .mapValues(values =>
+      values.sort(makeMergedFirst).reduce((acc, value) => {
+        if (value.isWip) {
+          return acc
+        }
 
-      return convertGhReviewsToPivotal(value.reviewsByUser)
-    })
+        return { ...acc, ...convertGhReviewsToPivotal(value.reviewsByUser) }
+      }, {}),
+    )
     .value()
 
   return {
@@ -43,3 +45,15 @@ const isEveryPullMerged = pulls =>
 
 const isCurrentStateFinished = story =>
   story.currentState === storyState.FINISHED
+
+const makeMergedFirst = (first, second) => {
+  if (first.isMerged && !second.isMerged) {
+    return -1
+  }
+
+  if (!first.isMerged && second.isMerged) {
+    return 1
+  }
+
+  return 0
+}

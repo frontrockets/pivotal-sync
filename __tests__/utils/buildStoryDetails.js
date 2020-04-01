@@ -11,7 +11,7 @@ describe('output', () => {
       expect(result).toMatchObject({ reviewsPerRepo: {} })
     })
 
-    it('returns correct reviews', () => {
+    it('returns correct reviews fo unique repositories', () => {
       const result = buildStoryDetails({
         pulls: [
           fakePull({
@@ -19,6 +19,7 @@ describe('output', () => {
             reviewsByUser: { u1: 'APPROVED', u2: 'COMMENTED' },
           }),
           fakePull({
+            isMerged: true,
             repoName: 'two',
             reviewsByUser: {
               u2: 'CHANGES_REQUESTED',
@@ -39,6 +40,91 @@ describe('output', () => {
             u3: 'in_review',
             u1: 'unstarted',
           },
+        },
+      })
+    })
+
+    it('returns correct reviews when pulls of one repository passed multiple times', () => {
+      const result = buildStoryDetails({
+        pulls: [
+          fakePull({
+            repoName: 'one',
+            reviewsByUser: { u1: 'APPROVED', u2: 'COMMENTED', u3: 'NEW' },
+          }),
+          fakePull({
+            repoName: 'one',
+            reviewsByUser: { u1: 'NEW', u2: 'APPROVED' },
+          }),
+        ],
+      })
+      expect(result).toMatchObject({
+        reviewsPerRepo: {
+          one: { u1: 'unstarted', u2: 'pass', u3: 'unstarted' },
+        },
+      })
+    })
+
+    it('returns correct reviews when merged pull goes after pull of same repository', () => {
+      const result = buildStoryDetails({
+        pulls: [
+          fakePull({
+            repoName: 'one',
+            reviewsByUser: { u1: 'APPROVED', u2: 'COMMENTED', u3: 'NEW' },
+          }),
+          fakePull({
+            isMerged: true,
+            repoName: 'one',
+            reviewsByUser: { u1: 'NEW', u2: 'APPROVED' },
+          }),
+        ],
+      })
+      expect(result).toMatchObject({
+        reviewsPerRepo: {
+          one: { u1: 'pass', u2: 'in_review', u3: 'unstarted' },
+        },
+      })
+    })
+
+    it('returns correct reviews when merged pull goes before pull of same repository', () => {
+      const result = buildStoryDetails({
+        pulls: [
+          fakePull({
+            isMerged: true,
+            repoName: 'one',
+            reviewsByUser: { u1: 'APPROVED', u2: 'COMMENTED', u3: 'NEW' },
+          }),
+          fakePull({
+            repoName: 'one',
+            reviewsByUser: { u1: 'NEW', u2: 'APPROVED' },
+          }),
+        ],
+      })
+      expect(result).toMatchObject({
+        reviewsPerRepo: {
+          one: { u1: 'unstarted', u2: 'pass', u3: 'unstarted' },
+        },
+      })
+    })
+
+    it('returns correct reviews when all pulls of same repository are merged', () => {
+      const result = buildStoryDetails({
+        story: {},
+        pulls: [
+          fakePull({
+            isMerged: true,
+            repoName: 'one',
+            reviewsByUser: { u1: 'APPROVED', u2: 'COMMENTED', u3: 'NEW' },
+          }),
+          fakePull({
+            isMerged: true,
+            repoName: 'one',
+            reviewsByUser: { u1: 'NEW', u2: 'APPROVED' },
+          }),
+        ],
+      })
+      expect(result).toMatchObject({
+        reviewsPerRepo: {
+          one: { u1: 'unstarted', u2: 'pass', u3: 'unstarted' },
         },
       })
     })
