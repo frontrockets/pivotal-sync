@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const extractPivotalLink = require('./utils/extractPivotalLink')
 const refreshStoryDetails = require('./refreshStoryDetails')
-const queue = require('./utils/queue')
+const throttle = require('./utils/throttle')
 
 async function sync(context) {
   const { body } = context.payload.pull_request
@@ -10,7 +10,7 @@ async function sync(context) {
   const isPivotalLinkPresent = Boolean(storyLink.id)
 
   if (isPivotalLinkPresent) {
-    await queue({ maxTime: 4000, key: storyLink.id }, () =>
+    await throttle({ wait: 4000, key: storyLink.id }, () =>
       refreshStoryDetails({
         storyId: storyLink.id,
         initiator: {
