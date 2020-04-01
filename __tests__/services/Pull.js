@@ -79,6 +79,20 @@ describe('.get', () => {
         })
       })
 
+      it('does not contain COMMENTED review if dismissed goes the last', async () => {
+        mockPullsListReviews([
+          fakePullReview({ user: { login: 'user1' }, state: 'COMMENTED' }),
+          fakePullReview({ user: { login: 'user2' }, state: 'COMMENTED' }),
+          fakePullReview({ user: { login: 'user1' }, state: 'DISMISSED' }),
+        ])
+
+        await expectResultContaining({
+          reviewsByUser: {
+            user2: 'COMMENTED',
+          },
+        })
+      })
+
       it('does not contain review from the author', async () => {
         mockPullsGet(fakePull({ user: { login: 'hero' } }))
         mockPullsListReviews([

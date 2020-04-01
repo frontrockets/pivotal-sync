@@ -66,7 +66,7 @@ const getReviewStatesByUser = ({ reviews, author }) => {
         result[user] = newReview
       } else if (approvalOrRejectionReview) {
         result[user] = approvalOrRejectionReview
-      } else if (states.includes(STATE_COMMENTED)) {
+      } else if (states[0] === STATE_COMMENTED) {
         result[user] = STATE_COMMENTED
       }
     })
