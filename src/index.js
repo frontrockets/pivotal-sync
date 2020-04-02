@@ -10,7 +10,7 @@ async function sync(context) {
   const isPivotalLinkPresent = Boolean(storyLink.id)
 
   if (isPivotalLinkPresent) {
-    await throttle({ wait: 6000, key: storyLink.id }, () =>
+    await throttle({ wait: 10000, key: storyLink.id }, () =>
       refreshStoryDetails({
         storyId: storyLink.id,
         initiator: {
