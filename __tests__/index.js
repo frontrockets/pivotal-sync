@@ -5,7 +5,10 @@ jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   writeFileSync: () => null,
 }))
+
 jest.mock('../src/refreshStoryDetails')
+
+jest.mock('../src/utils/debounce', () => (params, action) => action())
 
 beforeEach(() => {
   refreshStoryDetails.mockReset()

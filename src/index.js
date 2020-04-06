@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const extractPivotalLink = require('./utils/extractPivotalLink')
 const refreshStoryDetails = require('./refreshStoryDetails')
-const throttle = require('./utils/throttle')
+const debounce = require('./utils/debounce')
 
 async function sync(context) {
   const { body } = context.payload.pull_request
@@ -10,16 +10,23 @@ async function sync(context) {
   const isPivotalLinkPresent = Boolean(storyLink.id)
 
   if (isPivotalLinkPresent) {
-    await throttle({ wait: 10000, key: storyLink.id }, () =>
-      refreshStoryDetails({
+    await debounce(
+      {
+        groupLifeTime: 8000,
+        waitTime: 1000,
         storyId: storyLink.id,
-        initiator: {
-          owner: _.get(context, 'payload.organization.login'),
-          repo: _.get(context, 'payload.repository.name'),
-          pull_number: _.get(context, 'payload.pull_request.number'),
-        },
-        context,
-      }),
+        itemKey: context.id,
+      },
+      () =>
+        refreshStoryDetails({
+          storyId: storyLink.id,
+          initiator: {
+            owner: _.get(context, 'payload.organization.login'),
+            repo: _.get(context, 'payload.repository.name'),
+            pull_number: _.get(context, 'payload.pull_request.number'),
+          },
+          context,
+        }),
     )
   }
 }
