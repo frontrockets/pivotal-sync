@@ -39,7 +39,7 @@ module.exports = async function debounce(
   const getDescription = () =>
     request
       .get(`stories/${storyId}?fields=description`)
-      .then(res => res.data.description)
+      .then(res => res.data.description || '')
 
   const putDescription = description =>
     request.put(`stories/${storyId}`, {
